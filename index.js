@@ -16,7 +16,8 @@ const animationDuration = 500; // in milliseconds
 const framesPerSecond = 60;
 const totalFrames = (animationDuration / 1000) * framesPerSecond;
 let animationFrameId;
-
+let placeBombFlag = false;
+let isBombPlaced = false;
 // Initialize the game board
 const initializeBoard = () => {
   for (let i = 0; i < boardSize; i++) {
@@ -50,7 +51,7 @@ const initializeBoard = () => {
   board[playerPosition.y][playerPosition.x] = PLAYER;
 };
 
-function animateStep(startTime, startX, startY, endX, endY) {
+const animateStep = (startTime, startX, startY, endX, endY) => {
   const currentTime = Date.now();
   const progress = (currentTime - startTime) / animationDuration;
   const deltaX = (endX - startX) / totalFrames;
@@ -71,6 +72,10 @@ function animateStep(startTime, startX, startY, endX, endY) {
     playerPosition.y = interpolatedY;
 
     renderBoard();
+    if (placeBombFlag) {
+      placeBomb();
+      placeBombFlag = false;
+    }
 
     // Запустить следующий шаг анимации
     requestAnimationFrame((newTime) =>
@@ -83,7 +88,8 @@ function animateStep(startTime, startX, startY, endX, endY) {
 
     if (
       board[roundedY][roundedX] !== WALL &&
-      board[roundedY][roundedX] !== BREAKABLE_WALL
+      board[roundedY][roundedX] !== BREAKABLE_WALL &&
+      board[roundedY][roundedX] !== BOMB
     ) {
       playerPosition.x = roundedX;
       playerPosition.y = roundedY;
@@ -92,7 +98,7 @@ function animateStep(startTime, startX, startY, endX, endY) {
 
     renderBoard();
   }
-}
+};
 
 const handlePlayerMovement = (key) => {
   let newX = playerPosition.x;
@@ -106,7 +112,11 @@ const handlePlayerMovement = (key) => {
     newX -= 1;
   } else if (key === 'ArrowRight' && playerPosition.x < boardSize - 1) {
     newX += 1;
+  } else if (key === ' ') {
+    // If space is pressed, set the flag to place a bomb
+    placeBombFlag = true;
   }
+
   console.log(newX, newY);
   // New position move avalaibility control
   if (board[newY][newX] !== WALL && board[newY][newX] !== BREAKABLE_WALL) {
@@ -114,7 +124,7 @@ const handlePlayerMovement = (key) => {
     const startX = playerPosition.x;
     const startY = playerPosition.y;
 
-    // Запуск анимации
+    // Animation start
     animationFrameId = requestAnimationFrame(() =>
       animateStep(startTime, startX, startY, newX, newY),
     );
@@ -122,19 +132,25 @@ const handlePlayerMovement = (key) => {
 };
 
 const placeBomb = () => {
-  const currentPlayerX = playerPosition.x;
-  const currentPlayerY = playerPosition.y;
+  if (!isBombPlaced) {
+    const currentPlayerX = playerPosition.x;
+    const currentPlayerY = playerPosition.y;
 
-  //  place bomb on the current player position
-  board[currentPlayerY][currentPlayerX] = BOMB;
-  bombs.push({ x: currentPlayerX, y: currentPlayerY });
-  // console.log(bombs);
-  // draw  new field
-  renderBoard();
+    //  place bomb on the current player position
+    board[currentPlayerY][currentPlayerX] = BOMB;
+    bombs.push({ x: currentPlayerX, y: currentPlayerY });
+    console.log(board[currentPlayerY][currentPlayerX]);
 
-  // timer for bomb (3 sec)
-  console.log(board[currentPlayerY][currentPlayerX]);
-  setTimeout(() => explodeBomb(currentPlayerX, currentPlayerY, 2), 3000);
+    isBombPlaced = true;
+    // draw  new field
+    renderBoard();
+    // timer for bomb (3 sec)
+    console.log(board[currentPlayerY][currentPlayerX]);
+    setTimeout(() => {
+      explodeBomb(currentPlayerX, currentPlayerY, 1);
+      isBombPlaced = false;
+    }, 3000);
+  }
 };
 // define explosion directions
 const directions = [
@@ -150,8 +166,7 @@ const explodeBomb = (x, y, radius) => {
       for (let i = 0; i <= radius; i++) {
         const targetX = x + direction.x * i;
         const targetY = y + direction.y * i;
-
-        // Walls controll
+        // Walls control
         if (board[targetY][targetX] === WALL) {
           break;
         }
@@ -164,35 +179,44 @@ const explodeBomb = (x, y, radius) => {
       }
     }
 
-    // // clean up the cell
-    // bombs.splice(
-    //   bombs.findIndex((bomb) => bomb.x === x && bomb.y === y),
-    //   1,
-    // );
-    // board[y][x] = EMPTY;
-    // logic of effects to walls and player
+    // Logic of effects to walls and player
 
-    // draw new field
+    // Draw new field
     renderBoard();
 
-    // call animateExplosion again, till the end of animation time
+    // Call animateExplosion again until the end of animation time
     if (animationFrameCounter < maxFrames) {
       requestAnimationFrame(animateExplosion);
       animationFrameCounter++;
     } else {
-      for (const direction of directions) {
-        for (let i = 0; i <= radius; i++) {
-          const targetX = x + direction.x * i;
-          const targetY = y + direction.y * i;
-          console.log(board[targetY][targetX]);
-          if (board[targetY][targetX] === WALL) {
-            break;
+      // for (const direction of directions) {
+      //   for (let i = 0; i <= radius; i++) {
+      //     const targetX = x + direction.x * i;
+      //     const targetY = y + direction.y * i;
+      //     console.log(board[targetY][targetX]);
+      //     if (board[targetY][targetX] === WALL) {
+      //       break;
+      //     }
+      //     board[targetY][targetX] = EMPTY;
+      //   }
+      // }
+      // Set timeout to remove the explosion after a certain time
+      setTimeout(() => {
+        for (const direction of directions) {
+          for (let i = 0; i <= radius; i++) {
+            const targetX = x + direction.x * i;
+            const targetY = y + direction.y * i;
+            if (board[targetY][targetX] === WALL) {
+              break;
+            }
+            board[targetY][targetX] = EMPTY;
           }
-          board[targetY][targetX] = EMPTY;
         }
-      }
+        renderBoard();
+      }, 500); // Adjust the time as needed
     }
   };
+
   let animationFrameCounter = 0;
   const maxFrames = 60;
   animateExplosion();

@@ -21,10 +21,11 @@ export const renderBoard = () => {
 
       if (board[i][j] === WALL) {
         cell.classList.add('wall');
+      } else if (board[i][j] === BOMB) {
+        console.log('BOMB');
+        cell.classList.add('bomb');
       } else if (board[i][j] === PLAYER) {
         cell.classList.add('player');
-      } else if (board[i][j] === BOMB) {
-        cell.classList.add('bomb');
       } else if (board[i][j] === EXPLOSION) {
         cell.classList.add('explosion');
       } else if (board[i][j] === BREAKABLE_WALL) {
