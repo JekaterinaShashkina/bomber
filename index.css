@@ -1,0 +1,60 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #f0f0f0;
+}
+
+.game-container {
+  display: inline-block;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(15, 32px);
+  grid-template-rows: repeat(15, 32px);
+  gap: 2px;
+}
+
+.cell {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  background-image: url('/img/tileset.png');
+  background-position-x: 96px;
+  background-position-y: 96px;
+}
+
+.cell.player {
+  /* background-color: blue; */
+  background-image: url('/img/tileset.png');
+  background-position-x: 32px;
+  background-position-y: 32px;
+}
+
+.wall {
+  /* background-color: gray; */
+  background-image: url('/img/tileset.png');
+  background-position-x: -32px;
+  background-position-y: 96px;
+}
+
+.cell.bomb {
+  background-image: url('/img/tileset.png');
+  background-position-x: 96px;
+  background-position-y: 64px;
+}
+
+.explosion {
+  background-image: url('/img/tileset.png');
+  background-position-x: 32px;
+  background-position-y: 64px;
+}
+.breakable-wall {
+  background-image: url('/img/tileset.png');
+  background-position-x: 32px;
+  background-position-y: 96px;
+}
