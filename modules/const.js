@@ -8,3 +8,6 @@ export const PLAYER = 2;
 export const BOMB = 3;
 export const EXPLOSION = 4;
 export const BREAKABLE_WALL = 5;
+export const POWER_UP_BOMB_COUNT = 6;
+export const POWER_UP_SPEED_COUNT = 7;
+export const POWER_UP_FLAME_COUNT = 8;

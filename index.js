@@ -7,9 +7,14 @@ import {
   PLAYER,
   EXPLOSION,
   board,
+  POWER_UP_BOMB_COUNT,
+  POWER_UP_SPEED_COUNT,
+  POWER_UP_FLAME_COUNT,
 } from './modules/const.js';
 import { renderBoard } from './modules/Field.js';
+
 let lives = document.querySelector('.lives__count');
+
 let playerPosition = { x: 0, y: 0 };
 const bombs = [];
 const animationDuration = 500; // in milliseconds
@@ -19,6 +24,7 @@ let animationFrameId;
 let placeBombFlag = false;
 let isBombPlaced = false;
 let playerLives = 3;
+
 // Initialize the game board
 const initializeBoard = () => {
   for (let i = 0; i < boardSize; i++) {
@@ -50,6 +56,24 @@ const initializeBoard = () => {
   // Set player position
   playerPosition = { x: 1, y: 1 };
   board[playerPosition.y][playerPosition.x] = PLAYER;
+};
+const powerUpsTypes = [
+  POWER_UP_BOMB_COUNT,
+  POWER_UP_SPEED_COUNT,
+  POWER_UP_FLAME_COUNT,
+];
+const powerUps = [];
+const getRandomPowerUpType = () => {
+  const selectedPowerUp =
+    powerUpsTypes[Math.floor(Math.random() * powerUpsTypes.length)];
+  console.log('Selected Power-Up:', selectedPowerUp);
+  return selectedPowerUp;
+};
+const placePowerUp = (x, y) => {
+  if (board[y][x] === EMPTY) {
+    board[y][x] = getRandomPowerUpType();
+    renderBoard();
+  }
 };
 
 const animateStep = (startTime, startX, startY, endX, endY) => {
@@ -118,7 +142,6 @@ const handlePlayerMovement = (key) => {
     placeBombFlag = true;
   }
 
-  console.log(newX, newY);
   // New position move avalaibility control
   if (board[newY][newX] !== WALL && board[newY][newX] !== BREAKABLE_WALL) {
     const startTime = Date.now();
@@ -176,8 +199,17 @@ const explodeBomb = (x, y, radius) => {
           playerDies(); // Вызываем функцию обработки смерти
           // return;
         }
-        // Mark cell as explosion
-        board[targetY][targetX] = EXPLOSION;
+        if (board[targetY][targetX] === BREAKABLE_WALL) {
+          if (Math.random() < 0.3) {
+            const powerUpType = getRandomPowerUpType();
+            board[targetY][targetX] = powerUpType;
+          } else {
+            board[targetY][targetX] = EMPTY;
+          }
+        } else {
+          // Mark cell as explosion
+          board[targetY][targetX] = EXPLOSION;
+        }
 
         if (
           board[targetY][targetX] === BOMB ||
@@ -218,6 +250,7 @@ const explodeBomb = (x, y, radius) => {
             board[targetY][targetX] = EMPTY;
           }
         }
+        placePowerUp(x, y);
         renderBoard();
       }, 500); // Adjust the time as needed
     }
@@ -227,6 +260,7 @@ const explodeBomb = (x, y, radius) => {
   const maxFrames = 60;
   animateExplosion();
 };
+
 const resetPlayerPosition = () => {
   playerPosition = { x: 1, y: 1 };
   board[playerPosition.y][playerPosition.x] = PLAYER;

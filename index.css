@@ -46,15 +46,32 @@ body {
   background-image: url('/img/tileset.png');
   background-position-x: 96px;
   background-position-y: 64px;
+  background-color: rgba(91, 137, 91, 0.669);
 }
 
 .explosion {
   background-image: url('/img/tileset.png');
   background-position-x: 32px;
   background-position-y: 64px;
+  background-color: rgba(91, 137, 91, 0.669);
 }
 .breakable-wall {
   background-image: url('/img/tileset.png');
   background-position-x: 32px;
   background-position-y: 96px;
+}
+.power-up-bomb-count {
+  background-image: url('/img/tileset.png');
+  background-position-x: -32px;
+  background-position-y: 64px;
+}
+.power-up-speed-count {
+  background-image: url('/img/tileset.png');
+  background-position-x: -32px;
+  background-position-y: 32px;
+}
+.power-up-flame-count {
+  background-image: url('/img/tileset.png');
+  background-position-x: 32px;
+  background-position-y: 64px;
 }
