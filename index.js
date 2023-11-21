@@ -9,7 +9,7 @@ import {
   board,
 } from './modules/const.js';
 import { renderBoard } from './modules/Field.js';
-
+let lives = document.querySelector('.lives__count');
 let playerPosition = { x: 0, y: 0 };
 const bombs = [];
 const animationDuration = 500; // in milliseconds
@@ -18,6 +18,7 @@ const totalFrames = (animationDuration / 1000) * framesPerSecond;
 let animationFrameId;
 let placeBombFlag = false;
 let isBombPlaced = false;
+let playerLives = 3;
 // Initialize the game board
 const initializeBoard = () => {
   for (let i = 0; i < boardSize; i++) {
@@ -170,17 +171,22 @@ const explodeBomb = (x, y, radius) => {
         if (board[targetY][targetX] === WALL) {
           break;
         }
+        // Check if player is in the explosion area
+        if (targetX === playerPosition.x && targetY === playerPosition.y) {
+          playerDies(); // Вызываем функцию обработки смерти
+          // return;
+        }
         // Mark cell as explosion
         board[targetY][targetX] = EXPLOSION;
 
-        if (board[targetY][targetX] === BOMB) {
+        if (
+          board[targetY][targetX] === BOMB ||
+          board[targetY][targetX] === PLAYER
+        ) {
           explodeBomb(targetX, targetY, explosionRadius);
         }
       }
     }
-
-    // Logic of effects to walls and player
-
     // Draw new field
     renderBoard();
 
@@ -221,11 +227,26 @@ const explodeBomb = (x, y, radius) => {
   const maxFrames = 60;
   animateExplosion();
 };
+const resetPlayerPosition = () => {
+  playerPosition = { x: 1, y: 1 };
+  board[playerPosition.y][playerPosition.x] = PLAYER;
+};
+const playerDies = () => {
+  playerLives--;
 
+  if (playerLives <= 0) {
+    lives.innerHTML = 'You die. The end of game';
+  } else {
+    resetPlayerPosition();
+    renderBoard();
+    lives.innerHTML = playerLives;
+  }
+};
 // Entry point
 const startGame = () => {
   initializeBoard();
   renderBoard();
+  lives.innerHTML = '3';
   // Handle keydown
   document.addEventListener('keydown', (event) => {
     const { key } = event;
