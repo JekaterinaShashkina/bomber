@@ -24,6 +24,7 @@ let animationFrameId;
 let placeBombFlag = false;
 let isBombPlaced = false;
 let playerLives = 3;
+let bombCountPowerUpActive = false;
 
 // Initialize the game board
 const initializeBoard = () => {
@@ -75,7 +76,7 @@ const placePowerUp = (x, y) => {
     renderBoard();
   }
   powerUps.push({ x, y, type: board[y][x] });
-  console.log(powerUps);
+  console.log(...powerUps);
 };
 
 const collectPowerUp = () => {
@@ -95,12 +96,30 @@ const collectPowerUp = () => {
     }
   }
 };
+// let powerUpStartTime; // Время начала действия усилителя
+// let powerUpDuration = 30000; // Пример: 30 секунд
 const applyPowerUpEffect = (powerUpType) => {
   switch (powerUpType) {
     case POWER_UP_BOMB_COUNT:
+      powerUpStartTime = performance.now();
       console.log('Bomb count +');
       // Increase bomb count
-      // Implement your logic here
+      bombCountPowerUpActive = true;
+      // Получаем текущее время
+      const startTime = performance.now();
+      const updateEffect = (timestamp) => {
+        const elapsedTime = timestamp - startTime;
+        if (elapsedTime < 30000) {
+          // 30 секунд в миллисекундах
+          // Продлить эффект
+          requestAnimationFrame(updateEffect);
+        } else {
+          // Сбрасываем флаг после истечения времени
+          bombCountPowerUpActive = false;
+        }
+      };
+      // Запускаем цикл анимации для отслеживания времени
+      requestAnimationFrame(updateEffect);
       break;
     case POWER_UP_SPEED_COUNT:
       console.log('speed up');
@@ -115,6 +134,7 @@ const applyPowerUpEffect = (powerUpType) => {
     // Add more cases for other power-up types if needed
   }
 };
+
 const animateStep = (startTime, startX, startY, endX, endY) => {
   const currentTime = Date.now();
   const progress = (currentTime - startTime) / animationDuration;
@@ -197,15 +217,18 @@ const handlePlayerMovement = (key) => {
 };
 
 const placeBomb = () => {
-  if (!isBombPlaced) {
+  if (
+    (!isBombPlaced && !bombCountPowerUpActive) ||
+    (bombCountPowerUpActive && bombs.length < 2)
+  ) {
     const currentPlayerX = playerPosition.x;
     const currentPlayerY = playerPosition.y;
 
     //  place bomb on the current player position
     board[currentPlayerY][currentPlayerX] = BOMB;
     bombs.push({ x: currentPlayerX, y: currentPlayerY });
-    console.log(board[currentPlayerY][currentPlayerX]);
-
+    console.log(currentPlayerY, currentPlayerX);
+    console.log(...bombs);
     isBombPlaced = true;
     // draw  new field
     renderBoard();
@@ -296,7 +319,13 @@ const explodeBomb = (x, y, radius) => {
       }, 500); // Adjust the time as needed
     }
   };
-
+  // bombs.splice(
+  const i = bombs.findIndex((bomb) => bomb.x === x && bomb.y === y);
+  console.log(i);
+  bombs.splice(i, 1);
+  //   1,
+  // );
+  console.log(bombs);
   let animationFrameCounter = 0;
   const maxFrames = 60;
   animateExplosion();
