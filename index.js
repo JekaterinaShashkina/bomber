@@ -74,8 +74,47 @@ const placePowerUp = (x, y) => {
     board[y][x] = getRandomPowerUpType();
     renderBoard();
   }
+  powerUps.push({ x, y, type: board[y][x] });
+  console.log(powerUps);
 };
 
+const collectPowerUp = () => {
+  const currentPlayerX = Math.round(playerPosition.x);
+  const currentPlayerY = Math.round(playerPosition.y);
+
+  for (let i = 0; i < powerUps.length; i++) {
+    const powerUp = powerUps[i];
+    if (powerUp.x === currentPlayerX && powerUp.y === currentPlayerY) {
+      // Apply the effect of the power-up
+      applyPowerUpEffect(powerUp.type);
+
+      // Remove the collected power-up
+      powerUps.splice(i, 1);
+      renderBoard();
+      break; // Stop searching for power-ups once one is collected
+    }
+  }
+};
+const applyPowerUpEffect = (powerUpType) => {
+  switch (powerUpType) {
+    case POWER_UP_BOMB_COUNT:
+      console.log('Bomb count +');
+      // Increase bomb count
+      // Implement your logic here
+      break;
+    case POWER_UP_SPEED_COUNT:
+      console.log('speed up');
+      // Increase player speed
+      // Implement your logic here
+      break;
+    case POWER_UP_FLAME_COUNT:
+      console.log('flame increase');
+      // Increase bomb explosion radius
+      // Implement your logic here
+      break;
+    // Add more cases for other power-up types if needed
+  }
+};
 const animateStep = (startTime, startX, startY, endX, endY) => {
   const currentTime = Date.now();
   const progress = (currentTime - startTime) / animationDuration;
@@ -152,6 +191,8 @@ const handlePlayerMovement = (key) => {
     animationFrameId = requestAnimationFrame(() =>
       animateStep(startTime, startX, startY, newX, newY),
     );
+    // Collect power-ups
+    collectPowerUp();
   }
 };
 
