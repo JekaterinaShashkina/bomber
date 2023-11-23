@@ -14,7 +14,9 @@ import {
 import { renderBoard } from './modules/Field.js';
 
 let lives = document.querySelector('.lives__count');
-
+const DEFAULT_EXPLOSION_RADIUS = 1;
+let explosionRadius = DEFAULT_EXPLOSION_RADIUS;
+let playerSpeed = 1;
 let playerPosition = { x: 0, y: 0 };
 const bombs = [];
 const animationDuration = 500; // in milliseconds
@@ -96,40 +98,52 @@ const collectPowerUp = () => {
     }
   }
 };
-// let powerUpStartTime; // Время начала действия усилителя
-// let powerUpDuration = 30000; // Пример: 30 секунд
+let powerUpStartTime; // Время начала действия усилителя
 const applyPowerUpEffect = (powerUpType) => {
   switch (powerUpType) {
     case POWER_UP_BOMB_COUNT:
-      powerUpStartTime = performance.now();
       console.log('Bomb count +');
-      // Increase bomb count
       bombCountPowerUpActive = true;
-      // Получаем текущее время
-      const startTime = performance.now();
-      const updateEffect = (timestamp) => {
-        const elapsedTime = timestamp - startTime;
+      powerUpStartTime = performance.now();
+      const updateBombCountEffect = (timestamp) => {
+        const elapsedTime = timestamp - powerUpStartTime;
         if (elapsedTime < 30000) {
-          // 30 секунд в миллисекундах
-          // Продлить эффект
-          requestAnimationFrame(updateEffect);
+          requestAnimationFrame(updateBombCountEffect);
         } else {
-          // Сбрасываем флаг после истечения времени
           bombCountPowerUpActive = false;
         }
       };
-      // Запускаем цикл анимации для отслеживания времени
-      requestAnimationFrame(updateEffect);
+      requestAnimationFrame(updateBombCountEffect);
       break;
     case POWER_UP_SPEED_COUNT:
       console.log('speed up');
-      // Increase player speed
-      // Implement your logic here
+      playerSpeed = 4;
+      const originalPlayerSpeed = 1;
+      const speedEffectStartTime = performance.now();
+      const updateSpeedEffect = (timestamp) => {
+        const elapsedTime = timestamp - speedEffectStartTime;
+        if (elapsedTime < 30000) {
+          requestAnimationFrame(updateSpeedEffect);
+        } else {
+          playerSpeed = originalPlayerSpeed;
+        }
+      };
+      requestAnimationFrame(updateSpeedEffect);
       break;
     case POWER_UP_FLAME_COUNT:
       console.log('flame increase');
-      // Increase bomb explosion radius
-      // Implement your logic here
+      explosionRadius++;
+      const originalExplosionRadius = DEFAULT_EXPLOSION_RADIUS;
+      const flameEffectStartTime = performance.now();
+      const updateFlameEffect = (timestamp) => {
+        const elapsedTime = timestamp - flameEffectStartTime;
+        if (elapsedTime < 30000) {
+          requestAnimationFrame(updateFlameEffect);
+        } else {
+          explosionRadius = originalExplosionRadius;
+        }
+      };
+      requestAnimationFrame(updateFlameEffect);
       break;
     // Add more cases for other power-up types if needed
   }
@@ -235,7 +249,7 @@ const placeBomb = () => {
     // timer for bomb (3 sec)
     console.log(board[currentPlayerY][currentPlayerX]);
     setTimeout(() => {
-      explodeBomb(currentPlayerX, currentPlayerY, 1);
+      explodeBomb(currentPlayerX, currentPlayerY, explosionRadius);
       isBombPlaced = false;
     }, 3000);
   }
@@ -279,7 +293,7 @@ const explodeBomb = (x, y, radius) => {
           board[targetY][targetX] === BOMB ||
           board[targetY][targetX] === PLAYER
         ) {
-          explodeBomb(targetX, targetY, explosionRadius);
+          explodeBomb(targetX, targetY);
         }
       }
     }
