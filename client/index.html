@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bomber</title>
+    <script src="/socket.io/socket.io.js" defer></script>
+    <script src="index.js" type="module"></script>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <header></header>
+    <main>
+      <div class="wrapper">
+        <div class="game-container">
+          <div class="game-board"></div>
+          <div class="lives">LIVES: <span class="lives__count"></span></div>
+        </div>
+        <div class="controls-wrapper">
+          <ul id="events"></ul>
+          <div class="controls">
+            <div class="chat-wrapper">
+              <form id="chat-form">
+                <input id="chat" autocomplete="off" title="chat" />
+                <button id="say">Say</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
