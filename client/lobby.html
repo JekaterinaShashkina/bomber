@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lobby</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script src="./modules/lobby.js"></script>
+  </head>
+  <body>
+    <div id="nicknamePage">
+      <h1>Enter Your Nickname</h1>
+      <form id="nicknameForm">
+        <input
+          type="text"
+          id="nicknameInput"
+          placeholder="Enter your nickname"
+          required
+        />
+        <button type="submit">Join Lobby</button>
+      </form>
+    </div>
+
+    <div id="waitingPage" style="display: none">
+      <h1>Waiting for Players</h1>
+      <p>Players Connected: <span id="playerCount">0</span></p>
+      <p>Game Starting in: <span id="timer">0</span> seconds</p>
+    </div>
+  </body>
+</html>
