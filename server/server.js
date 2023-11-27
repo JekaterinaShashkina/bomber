@@ -8,17 +8,34 @@ app.use(express.static(`${__dirname}/../client`));
 const server = http.createServer(app);
 const io = socketio(server);
 const players = {};
+const gamers = [];
+// Парсинг JSON в теле запроса
+app.use(express.json());
+
+app.post('/lobby', (req, res) => {
+  const userData = req.body;
+  console.log('Received data:', userData);
+  // const playerId = socket.id;
+
+  res.json({ message: 'Data received successfully' });
+  gamers.push({ ...userData });
+  // console.log(gamers);
+});
 
 io.on('connection', (socket) => {
-  const playerId = socket.id;
+  console.log('A user connected to chat');
 
+  socket.join('chat');
+
+  const playerId = socket.id;
+  console.log(gamers);
   players[playerId] = {
-    id: playerId,
-    userName: `Player${Object.keys(players).length + 1}`,
+    id: gamers.id,
+    userName: /*`Player${Object.keys(players).length + 1}`*/ gamers.nickname,
   };
 
   socket.emit('message', `Welcome, ${players[playerId].username}!`);
-  console.log(`Player ${socket.id} connected`);
+  console.log(`Player ${socket.id}${players[playerId].username} connected`);
 
   socket.emit('mapUpdate', board);
 
