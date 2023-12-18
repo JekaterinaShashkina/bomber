@@ -55,6 +55,9 @@ const initializeBoard = () => {
   // // Set player position
   // playerPosition = { x: 1, y: 1 };
   // board[playerPosition.y][playerPosition.x] = PLAYER;
+
   return board;
 };
+
+// exports.newBoard = updateGameBoard();
 exports.map = initializeBoard();

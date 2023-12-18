@@ -7,8 +7,25 @@ app.use(express.static(`${__dirname}/../client`));
 const server = http.createServer(app);
 const io = socketio(server);
 const players = {};
+const boardSize = 15; // 15x15 game board
 let gamers_count = 0;
 let gameTimer;
+// Constants for cell types
+const EMPTY = 0;
+const WALL = 1;
+const PLAYER = 2;
+const BOMB = 3;
+const EXPLOSION = 4;
+const BREAKABLE_WALL = 5;
+const POWER_UP_BOMB_COUNT = 6;
+const POWER_UP_SPEED_COUNT = 7;
+const POWER_UP_FLAME_COUNT = 8;
+const playerPositions = [
+  { x: 1, y: 1 }, // Игрок 1
+  { x: boardSize - 2, y: boardSize - 2 }, // Игрок 4
+  { x: 1, y: boardSize - 2 }, // Игрок 2
+  { x: boardSize - 2, y: 1 }, // Игрок 3
+];
 // Парсинг JSON в теле запроса
 app.use(express.json());
 
@@ -33,12 +50,16 @@ app.post('/lobby', (req, res) => {
 io.on('connection', (socket) => {
   const playerId = socket.handshake.query.playerId;
   const player = players[playerId];
-  console.log('player ', player);
   socket.join('lobby');
   if (player) {
     console.log(`Player ${playerId} connected`);
     gamers_count = Object.keys(players).length;
     console.log('Players count ', gamers_count);
+    // Назначение начальной позиции игрока
+    assignStartPosition(playerId);
+    console.log('players ', players);
+    console.log('board ', board);
+    updateGameBoard(board, players);
 
     // Отправка информации о новом игроке в лобби
     io.to('lobby').emit('playerConnected', player);
@@ -52,11 +73,7 @@ io.on('connection', (socket) => {
     });
   } else {
     console.log(`Unknown player tried to connect with ID: ${playerId}`);
-    // socket.emit('error', 'Invalid playerId');
-    // socket.disconnect();
   }
-
-  // console.log('Players count ', Object.keys(players).length);
 
   // Обработка отключения игрока
   socket.on('disconnect', () => {
@@ -101,3 +118,33 @@ server.on('error', (err) => {
 server.listen(3000, () => {
   console.log('server is ready');
 });
+
+function assignStartPosition(playerId) {
+  // Логика для назначения начальной позиции игроку
+  // Например, используйте playerPositions из предыдущего примера
+  const positionIndex = Object.keys(players).length - 1;
+  players[playerId].position = playerPositions[positionIndex];
+}
+function updateGameBoard(board, players) {
+  // Сначала очистите старые позиции игроков
+  for (let y = 0; y < boardSize; y++) {
+    for (let x = 0; x < boardSize; x++) {
+      console.log(board);
+      if (board.map[y][x] === PLAYER) {
+        board.map[y][x] = EMPTY;
+      }
+    }
+  }
+
+  // Затем добавьте игроков на их текущие позиции
+  Object.values(players).forEach((player) => {
+    const pos = player.position;
+    if (pos) {
+      board.map[pos.y][pos.x] = PLAYER;
+    }
+  });
+
+  // Отправка обновленного состояния доски всем подключенным клиентам
+  io.emit('updateBoard', board);
+  return board;
+}

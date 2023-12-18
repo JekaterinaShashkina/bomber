@@ -107,7 +107,6 @@ const showLobbyPage = (playerId, nickname, socket) => {
 `;
   const time = document.querySelector('#timer');
   // Инициализация сокета с playerId
-  // const sock = io({ query: playerId });
   socket.on('timerUpdate', (timeLeft) => {
     // Обновляем отображение времени на фронте
     console.log('Time left:', timeLeft / 1000);
@@ -147,8 +146,13 @@ const showGamePage = (board) => {
     </div>
   `;
   renderBoard(board.map);
-  initChat(socket);
+  // initChat(socket);
+  socket.on('updateBoard', (updatedBoard) => {
+    // Обновление отображения доски на клиенте
+    renderBoard(updatedBoard);
+  });
 };
+
 init();
 
 // В зависимости от состояния приложения, решите, нужно ли отображать чат
