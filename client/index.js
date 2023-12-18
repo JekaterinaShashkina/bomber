@@ -5,6 +5,27 @@ let lives = document.querySelector('.lives__count');
 const mainContent = document.querySelector('.main-content');
 let gameState = 'main';
 
+const log = (text, name) => {
+  console.log(text);
+  const parent = document.querySelector('#events');
+  const el = document.createElement('li');
+  el.innerHTML = `${name}: ${text}`;
+
+  parent.appendChild(el);
+  parent.scrollTop = parent.scrollHeight;
+};
+const onChatSubmitted = (sock) => {
+  const input = document.querySelector('#chat');
+  const text = input.value;
+  console.log(text);
+  input.value = '';
+
+  // Проверка состояния при отправке сообщения
+  if (gameState === 'lobby' || gameState === 'game') {
+    sock.emit('message', { text });
+  }
+};
+
 const init = () => {
   mainPage();
 };
@@ -32,15 +53,10 @@ const mainPage = () => {
 const submitToLobby = (event) => {
   console.log('checking submitregistration form function');
   event.preventDefault();
-  // const err = document.querySelector('.error');
-  // if (err) {
-  //   err.classList.remove('error');
-  //   err.textContent = '';
-  // }
+
   const formData = new FormData(event.target);
-  formData.append('id', Math.floor(Math.random() * 10000));
   const data = Object.fromEntries(formData);
-  console.log('User Data:', data);
+
   fetch('/lobby', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -55,17 +71,12 @@ const submitToLobby = (event) => {
       return response.json();
     })
     .then((data) => {
-      // if (data.length > 0) {
-      //   console.log('Response Data:', data);
-      //   const arr = [];
-      //   data.forEach((elem) => {
-      //     arr.push(elem.message);
-      //   });
-      //   // showRegistrationPage(event);
-      //   // createErr(arr.join(', '));
-      //   console.log(data);
-      // }
-      showLobbyPage(event);
+      const playerId = data.playerId;
+      const socket = io.connect('http://localhost:3000', {
+        query: { playerId: playerId },
+      });
+      console.log(data);
+      showLobbyPage(data.playerId, data.userData.nickname, socket);
     })
     .catch((error) => {
       console.error(error);
@@ -73,14 +84,14 @@ const submitToLobby = (event) => {
     });
 };
 
-const showLobbyPage = (event) => {
-  event.preventDefault();
+const showLobbyPage = (playerId, nickname, socket) => {
+  console.log('lobby page', playerId, nickname);
   gameState = 'lobby'; // Установите состояние в лобби
   mainContent.innerHTML = `
   <div id="waitingPage">
     <h1>Waiting for Players</h1>
     <p>Players Connected: <span id="playerCount">0</span></p>
-    <p>Game Starting in: <span id="timer">0</span> seconds</p>
+    <p>Game Starting in: <span id="timer">10</span> seconds</p>
   </div>
   <div class="controls-wrapper">
   <ul id="events"></ul>
@@ -94,49 +105,52 @@ const showLobbyPage = (event) => {
   </div>
   </div>
 `;
-  initChat();
+  const time = document.querySelector('#timer');
+  // Инициализация сокета с playerId
+  // const sock = io({ query: playerId });
+  socket.on('timerUpdate', (timeLeft) => {
+    // Обновляем отображение времени на фронте
+    console.log('Time left:', timeLeft / 1000);
+    // Ваш код для обновления отображения времени на фронте
+    time.textContent = Math.round(timeLeft / 1000);
+  });
+
+  socket.on('gameStart', (board) => {
+    console.log(board);
+    // Обработка начала игры, например, перенаправление на страницу игры
+    console.log('Game starting now!');
+    showGamePage(board);
+    // Ваш код для перенаправления на страницу игры
+  });
+
+  initChat(socket);
 };
-const showGamePage = () => {
+const showGamePage = (board) => {
   gameState = 'game'; // Установите состояние в игру
-  // Остальной код игры...
-  initChat();
+  mainContent.innerHTML = `
+      <div class="wrapper">
+      <div class="game-container">
+        <div class="game-board"></div>
+        <div class="lives">LIVES: <span class="lives__count"></span></div>
+      </div>
+      <div class="controls-wrapper">
+        <ul id="events"></ul>
+        <div class="controls">
+          <div class="chat-wrapper">
+            <form id="chat-form">
+              <input id="chat" autocomplete="off" title="chat" />
+              <button id="say">Say</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  renderBoard(board.map);
+  initChat(socket);
 };
 init();
-// Entry point
-// const startGame = () => {
-//   initializeBoard();
-//   renderBoard();
-//   lives.innerHTML = '3';
-//   // Handle keydown
-//   document.addEventListener('keydown', (event) => {
-//     const { key } = event;
-//     handlePlayerMovement(key);
-//   });
-// };
-// Start the game
-// startGame();
 
-const log = (text, name) => {
-  console.log(text);
-  const parent = document.querySelector('#events');
-  const el = document.createElement('li');
-  el.innerHTML = `${name}: ${text}`;
-
-  parent.appendChild(el);
-  parent.scrollTop = parent.scrollHeight;
-};
-
-// const onChatSubmitted = (sock) => (e) => {
-//   e.preventDefault();
-//   const input = document.querySelector('#chat');
-//   const text = input.value;
-//   console.log(text);
-//   input.value = '';
-//   // Проверка состояния при отправке сообщения
-//   if (gameState === 'lobby' || gameState === 'game') {
-//     sock.emit('message', { text });
-//   }
-// };
 // В зависимости от состояния приложения, решите, нужно ли отображать чат
 const updateChatVisibility = () => {
   const chatForm = document.querySelector('#chat-form');
@@ -148,15 +162,9 @@ const updateChatVisibility = () => {
 // Первоначальная установка видимости чата
 updateChatVisibility();
 
-const initChat = () => {
-  const sock = io();
+const initChat = (sock) => {
+  // const sock = io();
 
-  // sock.on('mapUpdate', (map) => {
-  //   // Обновите отображение карты на основе полученных данных
-  //   console.log('Received map update:', map.map);
-  //   // Ваш код для обновления карты на клиенте
-  //   renderBoard(map.map);
-  // });
   sock.on('message', (message) => {
     console.log(message);
     log(message.text, message.playerName);
@@ -174,21 +182,13 @@ const initChat = () => {
   });
   const chatForm = document.querySelector('#chat-form');
 
-  const onChatSubmitted = (e) => {
-    e.preventDefault();
-    const input = document.querySelector('#chat');
-    const text = input.value;
-    console.log(text);
-    input.value = '';
-
-    // Проверка состояния при отправке сообщения
-    if (gameState === 'lobby' || gameState === 'game') {
-      sock.emit('message', { text });
-    }
-  };
-
   // Добавить обработчик события чата
-  chatForm.addEventListener('submit', onChatSubmitted);
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // console.log(chatForm.input.value);
+    onChatSubmitted(sock);
+  });
 
   // Удалить обработчик события чата при разрушении страницы
   window.addEventListener('beforeunload', () => {

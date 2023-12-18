@@ -23,6 +23,7 @@ app.post('/lobby', (req, res) => {
   players[playerId] = {
     id: playerId,
     userName: userData.nickname,
+    position: null,
     // Другие данные игрока
   };
   res.json({ playerId: playerId, userData: userData });

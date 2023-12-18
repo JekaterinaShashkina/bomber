@@ -11,7 +11,12 @@ const BREAKABLE_WALL = 5;
 const POWER_UP_BOMB_COUNT = 6;
 const POWER_UP_SPEED_COUNT = 7;
 const POWER_UP_FLAME_COUNT = 8;
-let playerPosition = { x: 0, y: 0 };
+const playerPositions = [
+  { x: 1, y: 1 }, // Игрок 1
+  { x: 1, y: boardSize - 2 }, // Игрок 2
+  { x: boardSize - 2, y: 1 }, // Игрок 3
+  { x: boardSize - 2, y: boardSize - 2 }, // Игрок 4
+];
 
 // Initialize the game board
 const initializeBoard = () => {
@@ -19,7 +24,12 @@ const initializeBoard = () => {
     const row = [];
     for (let j = 0; j < boardSize; j++) {
       // Add walls on the borders and at even cells
-      if (
+      let isPlayerPosition = playerPositions.some(
+        (p) => p.x === j && p.y === i,
+      );
+      if (isPlayerPosition) {
+        row.push(PLAYER);
+      } else if (
         i === 0 ||
         i === boardSize - 1 ||
         j === 0 ||
@@ -41,9 +51,10 @@ const initializeBoard = () => {
     }
     board.push(row);
   }
-  // Set player position
-  playerPosition = { x: 1, y: 1 };
-  board[playerPosition.y][playerPosition.x] = PLAYER;
+  // Проверяем, находится ли клетка в одной из начальных позиций игроков
+  // // Set player position
+  // playerPosition = { x: 1, y: 1 };
+  // board[playerPosition.y][playerPosition.x] = PLAYER;
   return board;
 };
 exports.map = initializeBoard();
