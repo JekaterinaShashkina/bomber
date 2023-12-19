@@ -57,8 +57,6 @@ io.on('connection', (socket) => {
     console.log('Players count ', gamers_count);
     // Назначение начальной позиции игрока
     assignStartPosition(playerId);
-    console.log('players ', players);
-    console.log('board ', board);
     updateGameBoard(board, players);
 
     // Отправка информации о новом игроке в лобби
@@ -74,6 +72,16 @@ io.on('connection', (socket) => {
   } else {
     console.log(`Unknown player tried to connect with ID: ${playerId}`);
   }
+  socket.on('move', (data) => {
+    console.log(player);
+    const { direction, playerId } = data;
+    // Обновите позицию для этого игрока
+    updatePlayerPosition(playerId, direction);
+    // Отправьте обновленное состояние игры всем клиентам
+    // io.emit('gameStateUpdate', currentGameState);
+    // console.log(board, players);
+    updateGameBoard(board, players);
+  });
 
   // Обработка отключения игрока
   socket.on('disconnect', () => {
@@ -129,13 +137,11 @@ function updateGameBoard(board, players) {
   // Сначала очистите старые позиции игроков
   for (let y = 0; y < boardSize; y++) {
     for (let x = 0; x < boardSize; x++) {
-      console.log(board);
       if (board.map[y][x] === PLAYER) {
         board.map[y][x] = EMPTY;
       }
     }
   }
-
   // Затем добавьте игроков на их текущие позиции
   Object.values(players).forEach((player) => {
     const pos = player.position;
@@ -143,8 +149,29 @@ function updateGameBoard(board, players) {
       board.map[pos.y][pos.x] = PLAYER;
     }
   });
-
+  console.log(players);
+  console.log(board);
   // Отправка обновленного состояния доски всем подключенным клиентам
-  io.emit('updateBoard', board);
-  return board;
+  io.emit('updateBoard', board.map);
+  // return board;
+}
+function updatePlayerPosition(playerId, direction) {
+  const player = players[playerId];
+  if (player) {
+    switch (direction) {
+      case 'left':
+        // Проверьте, можно ли переместиться влево и обновите позицию
+        player.position.x -= 1;
+        console.log(player.position);
+        break;
+      // Другие направления...
+      case 'right':
+        break;
+      case 'up':
+        break;
+      case 'down':
+        break;
+    }
+    // Добавьте логику для обновления позиции игрока
+  }
 }

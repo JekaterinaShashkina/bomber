@@ -4,7 +4,7 @@ import { initializeBoard, handlePlayerMovement } from './modules/game.js';
 let lives = document.querySelector('.lives__count');
 const mainContent = document.querySelector('.main-content');
 let gameState = 'main';
-
+let playerId;
 const log = (text, name) => {
   console.log(text);
   const parent = document.querySelector('#events');
@@ -71,7 +71,7 @@ const submitToLobby = (event) => {
       return response.json();
     })
     .then((data) => {
-      const playerId = data.playerId;
+      playerId = data.playerId;
       const socket = io.connect('http://localhost:3000', {
         query: { playerId: playerId },
       });
@@ -150,6 +150,17 @@ const showGamePage = (board) => {
   socket.on('updateBoard', (updatedBoard) => {
     // Обновление отображения доски на клиенте
     renderBoard(updatedBoard);
+  });
+  window.addEventListener('keydown', (event) => {
+    const { key } = event;
+    if (key === 'ArrowLeft') {
+      socket.emit('move', { direction: 'left', playerId: playerId });
+      socket.on('updateBoard', (data) => {
+        // Обновление отображения доски на клиенте
+        // renderBoard(updatedBoard);
+        console.log(data);
+      });
+    }
   });
 };
 
