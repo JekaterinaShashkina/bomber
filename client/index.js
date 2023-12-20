@@ -151,15 +151,26 @@ const showGamePage = (board) => {
     // Обновление отображения доски на клиенте
     renderBoard(updatedBoard);
   });
+
   window.addEventListener('keydown', (event) => {
     const { key } = event;
-    if (key === 'ArrowLeft') {
-      socket.emit('move', { direction: 'left', playerId: playerId });
-      socket.on('updateBoard', (data) => {
-        // Обновление отображения доски на клиенте
-        // renderBoard(updatedBoard);
-        console.log(data);
-      });
+
+    switch (key) {
+      case 'ArrowLeft':
+        socket.emit('move', { direction: 'left', playerId: playerId });
+        break;
+      case 'ArrowRight':
+        socket.emit('move', { direction: 'right', playerId: playerId });
+        break;
+      case 'ArrowUp':
+        socket.emit('move', { direction: 'up', playerId: playerId });
+        break;
+      case 'ArrowDown':
+        socket.emit('move', { direction: 'down', playerId: playerId });
+        break;
+      case 'Space':
+        socket.emit('placeBomb', { playerId });
+        break;
     }
   });
 };

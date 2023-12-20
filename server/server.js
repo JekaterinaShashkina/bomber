@@ -73,14 +73,16 @@ io.on('connection', (socket) => {
     console.log(`Unknown player tried to connect with ID: ${playerId}`);
   }
   socket.on('move', (data) => {
-    console.log(player);
     const { direction, playerId } = data;
     // Обновите позицию для этого игрока
     updatePlayerPosition(playerId, direction);
     // Отправьте обновленное состояние игры всем клиентам
-    // io.emit('gameStateUpdate', currentGameState);
-    // console.log(board, players);
     updateGameBoard(board, players);
+  });
+  // На стороне сервера
+  socket.on('placeBomb', (data) => {
+    const { playerId } = data;
+    placeBomb(playerId, board, players);
   });
 
   // Обработка отключения игрока
@@ -100,6 +102,13 @@ io.on('connection', (socket) => {
     startGameTimer();
   }
 });
+server.on('error', (err) => {
+  console.error(err);
+});
+server.listen(3000, () => {
+  console.log('server is ready');
+});
+
 // Функция для запуска таймера
 function startGameTimer() {
   const startTime = Date.now();
@@ -120,19 +129,13 @@ function startGameTimer() {
   }, 1000);
 }
 
-server.on('error', (err) => {
-  console.error(err);
-});
-server.listen(3000, () => {
-  console.log('server is ready');
-});
-
+// Логика для назначения начальной позиции игроку
 function assignStartPosition(playerId) {
-  // Логика для назначения начальной позиции игроку
   // Например, используйте playerPositions из предыдущего примера
   const positionIndex = Object.keys(players).length - 1;
   players[playerId].position = playerPositions[positionIndex];
 }
+// функция для обновления игровой доски
 function updateGameBoard(board, players) {
   // Сначала очистите старые позиции игроков
   for (let y = 0; y < boardSize; y++) {
@@ -149,29 +152,61 @@ function updateGameBoard(board, players) {
       board.map[pos.y][pos.x] = PLAYER;
     }
   });
-  console.log(players);
-  console.log(board);
   // Отправка обновленного состояния доски всем подключенным клиентам
   io.emit('updateBoard', board.map);
-  // return board;
 }
+
 function updatePlayerPosition(playerId, direction) {
   const player = players[playerId];
-  if (player) {
-    switch (direction) {
-      case 'left':
-        // Проверьте, можно ли переместиться влево и обновите позицию
-        player.position.x -= 1;
-        console.log(player.position);
-        break;
-      // Другие направления...
-      case 'right':
-        break;
-      case 'up':
-        break;
-      case 'down':
-        break;
-    }
-    // Добавьте логику для обновления позиции игрока
+  if (!player) return;
+  let newX = player.position.x;
+  let newY = player.position.y;
+  switch (direction) {
+    case 'left':
+      newX--;
+      break;
+    case 'right':
+      newX++;
+      break;
+    case 'up':
+      newY--;
+      break;
+    case 'down':
+      newY++;
+      break;
   }
+  // Добавьте логику для обновления позиции игрока
+  if (canMoveTo(newX, newY, board)) {
+    // Обновляем позицию игрока
+    player.position.x = newX;
+    player.position.y = newY;
+    // Обновляем игровое поле
+    updateGameBoard(board, players);
+  }
+}
+function canMoveTo(x, y, board) {
+  // Проверка границ доски
+  if (x < 0 || x >= board.map.length || y < 0 || y >= board.map[x].length) {
+    return false;
+  }
+  // Проверка, является ли клетка стеной
+  return board.map[y][x] !== WALL && board.map[y][x] !== BREAKABLE_WALL;
+}
+
+function placeBomb(playerId, board, players) {
+  const player = players[playerId];
+  if (!player) return;
+
+  const bombPosition = { x: player.position.x, y: player.position.y };
+  board.map[bombPosition.y][bombPosition.x] = BOMB;
+
+  // Установка таймера для взрыва бомбы
+  setTimeout(() => {
+    explodeBomb(bombPosition, board, players);
+    updateGameBoard(board, players); // Обновляем доску после взрыва
+  }, 3000);
+}
+function explodeBomb(position, board, players) {
+  // Логика взрыва бомбы
+  // Например, измените клетки вокруг бомбы и проверьте, есть ли игроки рядом
 }
