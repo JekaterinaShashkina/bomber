@@ -109,7 +109,7 @@ const showLobbyPage = (playerId, nickname, socket) => {
   // Инициализация сокета с playerId
   socket.on('timerUpdate', (timeLeft) => {
     // Обновляем отображение времени на фронте
-    console.log('Time left:', timeLeft / 1000);
+    // console.log('Time left:', timeLeft / 1000);
     // Ваш код для обновления отображения времени на фронте
     time.textContent = Math.round(timeLeft / 1000);
   });
@@ -168,10 +168,16 @@ const showGamePage = (board) => {
       case 'ArrowDown':
         socket.emit('move', { direction: 'down', playerId: playerId });
         break;
-      case 'Space':
+      case ' ':
+        console.log('Place bomb');
         socket.emit('placeBomb', { playerId });
         break;
     }
+  });
+
+  socket.on('bombExploded', (data) => {
+    console.log(data);
+    animateExplosion(data.x, data.y, data.radius);
   });
 };
 
@@ -220,4 +226,8 @@ const initChat = (sock) => {
   window.addEventListener('beforeunload', () => {
     chatForm.removeEventListener('submit', onChatSubmitted);
   });
+};
+
+const animateExplosion = (x, y, radius) => {
+  console.log(x, y, radius);
 };

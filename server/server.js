@@ -26,6 +26,8 @@ const playerPositions = [
   { x: 1, y: boardSize - 2 }, // Игрок 2
   { x: boardSize - 2, y: 1 }, // Игрок 3
 ];
+let isBombPlaced = false;
+const bombs = [];
 // Парсинг JSON в теле запроса
 app.use(express.json());
 
@@ -196,17 +198,111 @@ function canMoveTo(x, y, board) {
 function placeBomb(playerId, board, players) {
   const player = players[playerId];
   if (!player) return;
-
-  const bombPosition = { x: player.position.x, y: player.position.y };
-  board.map[bombPosition.y][bombPosition.x] = BOMB;
-
-  // Установка таймера для взрыва бомбы
-  setTimeout(() => {
-    explodeBomb(bombPosition, board, players);
-    updateGameBoard(board, players); // Обновляем доску после взрыва
-  }, 3000);
+  if (!isBombPlaced) {
+    const bombPosition = { x: player.position.x, y: player.position.y };
+    board.map[bombPosition.y][bombPosition.x] = BOMB;
+    bombs.push({ x: player.position.x, y: player.position.y });
+    isBombPlaced = true;
+    // Установка таймера для взрыва бомбы
+    setTimeout(() => {
+      explodeBomb(bombPosition.x, bombPosition.y, 2, board, players, playerId);
+      updateGameBoard(board, players); // Обновляем доску после взрыва
+      isBombPlaced = false;
+    }, 3000);
+  }
 }
-function explodeBomb(position, board, players) {
+// define explosion directions
+const directions = [
+  { x: 0, y: 1 },
+  { x: 0, y: -1 },
+  { x: 1, y: 0 },
+  { x: -1, y: 0 },
+];
+function explodeBomb(x, y, radius, board, players, playerId) {
   // Логика взрыва бомбы
   // Например, измените клетки вокруг бомбы и проверьте, есть ли игроки рядом
+  const player = players[playerId];
+  // const animateExplosion = () => {
+  for (const direction of directions) {
+    for (let i = 0; i <= radius; i++) {
+      const targetX = x + direction.x * i;
+      const targetY = y + direction.y * i;
+      // Walls control
+      if (board.map[targetY][targetX] === WALL) {
+        break;
+      }
+      // Check if player is in the explosion area
+      if (targetX === player.position.x && targetY === player.position.y) {
+        // playerDies(); // Вызываем функцию обработки смерти
+        console.log('player dies');
+        // return;
+      }
+      if (board.map[targetY][targetX] === BREAKABLE_WALL) {
+        if (Math.random() < 0.3) {
+          // const powerUpType = getRandomPowerUpType();
+          // board.map[targetY][targetX] = powerUpType;
+        } else {
+          board.map[targetY][targetX] = EMPTY;
+        }
+      } else {
+        // Mark cell as explosion
+        board.map[targetY][targetX] = EXPLOSION;
+      }
+
+      if (
+        board.map[targetY][targetX] === BOMB ||
+        board.map[targetY][targetX] === PLAYER
+      ) {
+        explodeBomb(targetX, targetY);
+      }
+      io.emit('bombExploded', { x: targetX, y: targetY, radius: 2 });
+    }
+  }
+  // Draw new field
+  // renderBoard();
+  updateGameBoard(board, players);
+  // Сервер Отправляет Уведомление о Взрыве:
+  // Call animateExplosion again until the end of animation time
+  // if (animationFrameCounter < maxFrames) {
+  //   requestAnimationFrame(animateExplosion);
+  //   animationFrameCounter++;
+  // } else {
+  //   // for (const direction of directions) {
+  //   //   for (let i = 0; i <= radius; i++) {
+  //   //     const targetX = x + direction.x * i;
+  //   //     const targetY = y + direction.y * i;
+  //   //     console.log(board[targetY][targetX]);
+  //   //     if (board[targetY][targetX] === WALL) {
+  //   //       break;
+  //   //     }
+  //   //     board[targetY][targetX] = EMPTY;
+  //   //   }
+  //   // }
+  //   // Set timeout to remove the explosion after a certain time
+  //   setTimeout(() => {
+  //     for (const direction of directions) {
+  //       for (let i = 0; i <= radius; i++) {
+  //         const targetX = x + direction.x * i;
+  //         const targetY = y + direction.y * i;
+  //         if (board.map[targetY][targetX] === WALL) {
+  //           break;
+  //         }
+  //         board.map[targetY][targetX] = EMPTY;
+  //       }
+  //     }
+  //     // placePowerUp(x, y);
+  //     // renderBoard();
+  //     updateGameBoard(board, players);
+  //   }, 500); // Adjust the time as needed
+  // }
+  // }
+  // bombs.splice(
+  const i = bombs.findIndex((bomb) => bomb.x === x && bomb.y === y);
+  bombs.splice(i, 1);
+  //   1,
+  // );
+  // console.log(bombs);
+  // let animationFrameCounter = 0;
+  // const maxFrames = 60;
+  // animateExplosion();
 }
